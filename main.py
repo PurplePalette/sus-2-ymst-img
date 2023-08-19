@@ -13,6 +13,8 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
 
+app.mount("/static", FileResponse("static"), name="static")
+
 
 @app.post("/convert")
 async def convert(request: Request, chart: str = Form(), textFlag: bool = Form()):
