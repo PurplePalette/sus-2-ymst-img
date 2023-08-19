@@ -82,6 +82,15 @@ class HoldEighth:
     width: int
 
 
+@dataclass
+class Split:
+    tick: int
+    end_tick: int
+    lane: int
+    gimmick_type: int
+    id: int
+
+
 class NoteType:
     None_ = 0
     Normal = 10

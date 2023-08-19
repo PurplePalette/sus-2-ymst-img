@@ -1,5 +1,8 @@
 import argparse
-import sys
+import glob
+import os
+import re
+from dataclasses import dataclass
 
 import sus
 
@@ -13,15 +16,30 @@ from .ytypes import (
     NoteType,
     Scratch,
     Sound,
+    Split,
     TapNote,
     TapType,
 )
 
 
+@dataclass
+class ErrorMessage:
+    message: str
+    detail: str
+
+
 class Sus2Ymst:
     def __init__(self, sus_filename: str):
         with open(sus_filename, "r") as file:
-            self.score: sus.Score = sus.load(file)
+            text = file.read()
+            self.score: sus.Score = sus.loads(text)
+            self.score_text = text
+            self.split_ids = [
+                int(os.path.splitext(os.path.basename(bundle))[0])
+                for bundle in glob.glob("game_splitlane_assets_spliteffects/*.bundle")
+                if re.search(r"\d+\.bundle", bundle)
+            ]
+            self.error_messages = []
 
     def on_hold_start(self, note: sus.Note):
         for hold in self.score.slides:
@@ -98,6 +116,104 @@ class Sus2Ymst:
         )
         return sec
 
+    def get_split(self) -> list[Split]:
+        bar_lengths = sorted(self.score.bar_lengths, key=lambda x: x[0])
+        high_speed_data_pattern = re.compile(
+            r"(?P<barIndex>\d*)'(?P<tickOffset>[0-9]*):(?P<speedRatio>[+-]?(?:\d+\.?\d*|\.\d+))"
+        )
+        # ハイスピード定義の取得
+        high_speed_definition = re.compile(r"#TIL(?P<zz>\d*):(?P<data>.+)")
+        high_speed_definitions = high_speed_definition.findall(self.score_text)
+        # ハイスピード定義があれば
+        if len(high_speed_definitions) == 0:
+            return
+        tmp_splits = []
+        for s in high_speed_definitions:
+            for high_speed in high_speed_data_pattern.findall(s[1]):
+                bar_index = int(high_speed[0])
+                tick_offset = int(high_speed[1])
+                speed_ratio = str(high_speed[2])
+                tick = 0
+                for i, bar_length in enumerate(bar_lengths):
+                    if bar_length[0] <= bar_index:
+                        if i != len(bar_lengths) - 1:
+                            if bar_lengths[i + 1][0] <= bar_index:
+                                tick += (
+                                    (bar_lengths[i + 1][0] - bar_length[0])
+                                    * bar_length[1]
+                                    * 480
+                                )
+                            else:
+                                tick += (
+                                    (bar_index - bar_length[0]) * bar_length[1] * 480
+                                )
+                        else:
+                            tick += (bar_index - bar_length[0]) * bar_length[1] * 480
+                    else:
+                        break
+                tick += tick_offset
+                gimmick_type = int(speed_ratio.split(".")[0])
+                end_flag = False
+                if gimmick_type >= 10:
+                    gimmick_type /= 10
+                    end_flag = True
+                if gimmick_type not in range(1, 7):
+                    print("gimmick_type must be 1-6")
+                    self.error_messages.append(
+                        ErrorMessage(
+                            "gimmick_typeは1-6で指定してください。",
+                            f"bar_index: {bar_index}, tick_offset: {tick_offset}, speed_ratio: {speed_ratio}",
+                        )
+                    )
+                    continue
+                split_id = int(speed_ratio.split(".")[1])
+                if end_flag:
+                    tmp_splits.append(Split(-1, tick, 0, gimmick_type + 10, split_id))
+                else:
+                    tmp_splits.append(Split(tick, -1, 0, gimmick_type + 10, split_id))
+        splits = []
+        for i, split1 in enumerate(tmp_splits):
+            if split1.end_tick == -1:
+                for split2 in tmp_splits[i + 1 :]:
+                    if (
+                        split2.gimmick_type == split1.gimmick_type
+                        and split2.id == split1.id
+                    ):
+                        if self.check_split(split1.id):
+                            splits.append(
+                                Split(
+                                    split1.tick,
+                                    split2.end_tick,
+                                    0,
+                                    split1.gimmick_type,
+                                    split1.id,
+                                )
+                            )
+                        else:
+                            print(f"split: {split1.id}はspliteffectsに存在しません。")
+                            self.error_messages.append(
+                                ErrorMessage(
+                                    f"split: {split1.id}はspliteffectsに存在しません。",
+                                    f"tick: {split1.tick}, gimmick_type: {split1.gimmick_type}, id: {split1.id}",
+                                )
+                            )
+                        break
+                else:
+                    print(f"{split1}に対する終了のハイスピードが定義されていません。")
+                    self.error_messages.append(
+                        ErrorMessage(
+                            f"{split1}に対する終了のハイスピードが定義されていません。",
+                            f"tick: {split1.tick}, gimmick_type: {split1.gimmick_type}, id: {split1.id}",
+                        )
+                    )
+        return splits
+
+    def check_split(self, split_id: int) -> bool:
+        if split_id in self.split_ids:
+            return True
+        else:
+            return False
+
     def convert(self, lane_flag=False) -> str:
         ticks_per_beat_request = (
             [
@@ -111,7 +227,18 @@ class Sus2Ymst:
         ticks_per_beat = ticks_per_beat_request[0]
         if ticks_per_beat != 480:
             print("tick_per_beat must be 480")
-            sys.exit(1)
+            self.error_messages.append(
+                ErrorMessage(
+                    "tick_per_beatは480である必要があります。",
+                    f"tick_per_beat: {ticks_per_beat}",
+                )
+            )
+            return ""
+
+        # スプリットの処理
+        splits = self.get_split()
+
+        # ノーツの処理
         tap_notes = []
         scratch_notes = []
         flick_notes = []
@@ -238,7 +365,8 @@ class Sus2Ymst:
             )
 
         all_notes = (
-            tap_notes
+            splits
+            + tap_notes
             + scratch_notes
             + flick_notes
             + hold_notes
@@ -293,7 +421,13 @@ class Sus2Ymst:
                 notation_txt += f"{t:.4f},-1.0,{note.type},{lane},{note.width},{GimmickType.None_},{0}\n"
             elif isinstance(note, HoldEighth):
                 notation_txt += f"{t:.4f},-1.0,{NoteType.HoldEighth},{lane},{note.width},{GimmickType.None_},{0}\n"
+            elif isinstance(note, Split):
+                end_t = self.tick_to_sec(note.end_tick)
+                notation_txt += f"{t:.4f},{end_t:.4f},{NoteType.None_},{lane},{0},{note.gimmick_type},{note.id}\n"
         return notation_txt
+
+    def get_error_messages(self) -> list[ErrorMessage]:
+        return self.error_messages
 
 
 if __name__ == "__main__":

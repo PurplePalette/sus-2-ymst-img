@@ -52,9 +52,20 @@ async def convert(
         with open(svg_file_path, "r", encoding="utf-8") as f:
             svg_text = f.read()
 
-        return templates.TemplateResponse(
-            "convert.html", {"request": request, "svg_text": svg_text}
-        )
+        if textFlag:
+            return templates.TemplateResponse(
+                "convert.html", {"request": request, "svg_text": svg_text}
+            )
+        else:
+            error_messages = sus2ymst.get_error_messages()
+            return templates.TemplateResponse(
+                "convert.html",
+                {
+                    "request": request,
+                    "svg_text": svg_text,
+                    "error_messages": error_messages,
+                },
+            )
 
 
 @app.get("/")

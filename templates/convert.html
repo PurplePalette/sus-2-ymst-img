@@ -40,5 +40,10 @@
             <div><button class="btn" onclick="download()">Download</button></div>
             <canvas id="chart-landscape"></canvas>
         </div>
+        <div class="error_messages">
+            {% for message in error_messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
     </body>
 </html>
