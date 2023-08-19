@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<title>sus2ymst</title>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">SUS to YMST Image Converter</a>
+        </div>
+    </nav>
+</header>
+<main class="container is-centered">
+    <div class="row text-center justify-content-center">
+        <div class="col-10 mx-4 my-4 box">
+            <p>SUSファイルからymstの譜面画像を生成します。</p>
+        </div>
+        <div class="col-10 col-md-6 mx-4 my-4 box">
+            <label for="formFileLg" class="form-label">下記フォームをクリックでファイル選択...</label>
+            <input accept=".sus,.txt" class="form-control form-control-md" id="formFile" type="file">
+        </div>
+        <div class="col-10 col-md-6 mx-4 my-4 box">
+            <button
+            type="button"
+            class="btn btn-primary btn-lg"
+            onclick="uploadSusFile()"
+            >譜面の画像を生成する</button>
+        </div>
+        <div class="row text-center">
+            <h4 id="generate_image"></h4>
+        </div>
+    </div>
+</main>
+<footer class="footer mt-4 py-3 bg-light fixed-bottom">
+    <div class="container text-center">
+      <p class="text-muted">&copy; 2023 PurplePalette</p>
+      <p class="text-muted">Source: <a href="https://github.com/PurplePalette/sus-2-ymst-img">Github</a></>
+    </div>
+</footer>
+</body>
+<script>
+async function uploadSusFile() {
+    const file = document.getElementById('formFile').files[0];
+    if (file == null) {
+        alert('SUSファイルを選択してください');
+        return;
+    }
+    const chartText = await file.text();
+    document.getElementById('generate_image').innerText = "生成中...";
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = '/convert';
+    const hiddenField = document.createElement('input');
+    hiddenField.type = 'hidden';
+    hiddenField.name = 'chart';
+    hiddenField.value = chartText;
+    const textFlag = document.createElement('input');
+    textFlag.type = 'hidden';
+    textFlag.name = 'textFlag';
+    textFlag.value = file.name.endsWith('.txt') ? '1' : '0';
+    form.appendChild(hiddenField);
+    form.appendChild(textFlag);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</html>

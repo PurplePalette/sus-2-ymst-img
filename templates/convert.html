@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <title>sus2ymst</title>
+        <script>
+            function download() {
+                const canvas = document.getElementById("chart-landscape");
+                const dlLink = document.createElement('a');
+                dlLink.href = canvas.toDataURL("image/png");
+                dlLink.download = "image";
+                document.body.appendChild(dlLink);
+                dlLink.click();
+                document.body.removeChild(dlLink);
+            }
+            window.onload = () => {
+                const svgString = document.getElementById('svg_text').innerHTML;
+                const canvas = document.getElementById('chart-landscape');
+                const ctx = canvas.getContext("2d");
+                const chartImage = new Image();
+                chartImage.src = "data:image/svg+xml;base64," + btoa(svgString);
+                chartImage.onload = () => {
+                    const width = chartImage.width;
+                    const height = chartImage.height;
+                    canvas.width = width;
+                    canvas.height = height;
+                    console.log(width, height);
+                    ctx.drawImage(chartImage, 0, 0);
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div id="svg_text" hidden>
+            {{ svg_text | safe }}
+        </div>
+        <div class="landscape">
+            <div><button class="btn" onclick="download()">Download</button></div>
+            <canvas id="chart-landscape"></canvas>
+        </div>
+    </body>
+</html>
