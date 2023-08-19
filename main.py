@@ -18,9 +18,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.post("/convert")
-async def convert(request: Request, chart: str = Form(), textFlag: bool = Form()):
+async def convert(
+    request: Request,
+    chart: str = Form(),
+    textFlag: bool = Form(),
+    laneFlag: bool = Form(),
+):
     # 一時ディレクトリの作成
     with tempfile.TemporaryDirectory() as temp_dir:
+        # テキストファイルの場合は、変換しない
         if textFlag:
             notation_txt = chart
         else:
@@ -30,7 +36,7 @@ async def convert(request: Request, chart: str = Form(), textFlag: bool = Form()
                 f.write(chart)
             sus2ymst = Sus2Ymst(file_path)
             try:
-                notation_txt = sus2ymst.convert()
+                notation_txt = sus2ymst.convert(laneFlag)
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 

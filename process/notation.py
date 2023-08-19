@@ -98,7 +98,7 @@ class Sus2Ymst:
         )
         return sec
 
-    def convert(self) -> str:
+    def convert(self, lane_flag=False) -> str:
         ticks_per_beat_request = (
             [
                 int(request.split()[1])
@@ -252,7 +252,10 @@ class Sus2Ymst:
         notation_txt = ""
         for note in all_notes:
             t = self.tick_to_sec(note.tick)
-            lane = note.lane - 2 + 1
+            if lane_flag:
+                lane = note.lane + 1
+            else:
+                lane = note.lane - 2 + 1
             if isinstance(note, TapNote):
                 if note.type == TapType.Normal:
                     notation_txt += f"{t:.4f},-1.0,{NoteType.Normal},{lane},{note.width},{GimmickType.None_},{0}\n"

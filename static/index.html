@@ -37,6 +37,14 @@
             <input accept=".sus,.txt" class="form-control form-control-md" id="formFile" type="file">
         </div>
         <div class="col-10 col-md-6 mx-4 my-4 box">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" value="" id="laneFlag">
+                <label class="form-check-label" for="laneFlag">
+                    Chedの0~11(B)レーンを使用している場合は、チェックしてください。
+                </label>
+            </div>
+        </div>
+        <div class="col-10 col-md-6 mx-4 my-4 box">
             <button
             type="button"
             class="btn btn-primary btn-lg"
@@ -75,8 +83,13 @@ async function uploadSusFile() {
     textFlag.type = 'hidden';
     textFlag.name = 'textFlag';
     textFlag.value = file.name.endsWith('.txt') ? '1' : '0';
+    const laneFlag = document.createElement('input');
+    laneFlag.type = 'hidden';
+    laneFlag.name = 'laneFlag';
+    laneFlag.value = document.getElementById('laneFlag').checked ? '1' : '0';
     form.appendChild(hiddenField);
     form.appendChild(textFlag);
+    form.appendChild(laneFlag);
     document.body.appendChild(form);
     form.submit();
 }
