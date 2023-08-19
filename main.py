@@ -58,8 +58,11 @@ async def convert(
 
 
 @app.get("/")
-async def index():
-    return FileResponse("static/index.html")
+async def index(request: Request):
+    client_host = request.client.host
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "host": client_host}
+    )
 
 
 if __name__ == "__main__":
