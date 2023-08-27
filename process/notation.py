@@ -126,7 +126,7 @@ class Sus2Ymst:
         high_speed_definitions = high_speed_definition.findall(self.score_text)
         # ハイスピード定義があれば
         if len(high_speed_definitions) == 0:
-            return
+            return []
         tmp_splits = []
         for s in high_speed_definitions:
             for high_speed in high_speed_data_pattern.findall(s[1]):
@@ -423,6 +423,10 @@ class Sus2Ymst:
                 notation_txt += f"{t:.4f},-1.0,{NoteType.HoldEighth},{lane},{note.width},{GimmickType.None_},{0}\n"
             elif isinstance(note, Split):
                 end_t = self.tick_to_sec(note.end_tick)
+                t += 1.0
+                end_t -= 1.0
+                if end_t < t:
+                    end_t = t + 0.1
                 notation_txt += f"{t:.4f},{end_t:.4f},{NoteType.None_},{lane},{0},{note.gimmick_type},{note.id}\n"
         return notation_txt
 
