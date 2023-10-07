@@ -305,7 +305,7 @@ class Sus2Ymst:
                     and note.lane == end_note.lane
                     and note.lane == end_note.lane
                     and note.width == end_note.width
-                    and self.get_direction(note) == FlickDirection.Up
+                    # and self.get_direction(note) == FlickDirection.Up
                 ):  # 同じ大きさのスクラッチで終わる
                     hold_type |= HoldType.Scratch
                     gimmick_type = GimmickType.None_
@@ -314,7 +314,7 @@ class Sus2Ymst:
                 elif (
                     note.tick == end_note.tick
                     and note.lane == end_note.lane
-                    and self.get_direction(note) == FlickDirection.Right
+                    # and self.get_direction(note) == FlickDirection.Right
                 ):
                     hold_type |= HoldType.Scratch
                     gimmick_type = GimmickType.JumpScratch
@@ -323,7 +323,7 @@ class Sus2Ymst:
                 elif (
                     note.tick == end_note.tick
                     and note.lane + note.width == end_note.lane + end_note.width
-                    and self.get_direction(note) == FlickDirection.Left
+                    # and self.get_direction(note) == FlickDirection.Left
                 ):
                     hold_type |= HoldType.Scratch
                     gimmick_type = GimmickType.JumpScratch
