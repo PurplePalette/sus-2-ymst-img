@@ -4,7 +4,7 @@ Convert SUS to YMST(world dai star) chart image.
 
 ## Chart specifications
 Charts are written in sus format.
-The music score editor is assumed to be Ched.
+Editor is assumed to be Ched.
 
 | YMST                             | Ched                                          |
 | ------------------------------------ | --------------------------------------------- |
