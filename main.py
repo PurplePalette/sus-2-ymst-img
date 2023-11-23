@@ -2,19 +2,33 @@ import os
 import subprocess
 import tempfile
 
+import sus2ymst
 import uvicorn
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.responses import FileResponse
-
-from process.notation import Sus2Ymst
 
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+def notation_text_to_svg(notation_text: str) -> str:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        text_file_path = os.path.join(temp_dir, "notation.txt")
+        with open(text_file_path, "w") as f:
+            f.write(notation_text)
+
+        ret = subprocess.run(["php", "svg.php", temp_dir])
+        if ret.returncode != 0:
+            raise HTTPException(status_code=500, detail="Failed to convert")
+
+        svg_file_path = os.path.join(temp_dir, "notation.svg")
+        with open(svg_file_path, "r", encoding="utf-8") as f:
+            svg_text = f.read()
+    return svg_text
 
 
 @app.post("/convert")
@@ -24,48 +38,27 @@ async def convert(
     textFlag: bool = Form(),
     laneFlag: bool = Form(),
 ):
-    # 一時ディレクトリの作成
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # テキストファイルの場合は、変換しない
-        if textFlag:
-            notation_txt = chart
-        else:
-            # アップロードされたファイルを一時ディレクトリに保存
-            file_path = os.path.join(temp_dir, "notation.sus")
-            with open(file_path, "w") as f:
-                f.write(chart)
-            sus2ymst = Sus2Ymst(file_path)
-            try:
-                notation_txt = sus2ymst.convert(laneFlag)
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
-
-        text_file_path = os.path.join(temp_dir, "notation.txt")
-        with open(text_file_path, "w") as f:
-            f.write(notation_txt)
-
-        ret = subprocess.run(["php", "svg.php", temp_dir])
-        if ret.returncode != 0:
-            raise HTTPException(status_code=500, detail="Failed to convert")
-
-        svg_file_path = os.path.join(temp_dir, "notation.svg")
-        with open(svg_file_path, "r", encoding="utf-8") as f:
-            svg_text = f.read()
-
-        if textFlag:
-            return templates.TemplateResponse(
-                "convert.html", {"request": request, "svg_text": svg_text}
-            )
-        else:
-            error_messages = sus2ymst.get_error_messages()
-            return templates.TemplateResponse(
-                "convert.html",
-                {
-                    "request": request,
-                    "svg_text": svg_text,
-                    "error_messages": error_messages,
-                },
-            )
+    # テキストファイルの場合は、変換しない
+    if textFlag:
+        svg_text = notation_text_to_svg(chart)
+        return templates.TemplateResponse(
+            "convert.html", {"request": request, "svg_text": svg_text}
+        )
+    else:
+        lane_offset = 0 if laneFlag else 2
+        try:
+            notation_txt, error_messages = sus2ymst.loads(chart, lane_offset)
+            svg_text = notation_text_to_svg(notation_txt)
+        except Exception:
+            raise HTTPException(status_code=500)
+        return templates.TemplateResponse(
+            "convert.html",
+            {
+                "request": request,
+                "svg_text": svg_text,
+                "error_messages": error_messages,
+            },
+        )
 
 
 @app.get("/")

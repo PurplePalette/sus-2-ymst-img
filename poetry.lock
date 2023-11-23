@@ -517,6 +517,20 @@ dataclasses-json = ">=0.5.6,<0.6.0"
 single-source = ">=0.2.0,<0.3.0"
 
 [[package]]
+name = "sus2ymst"
+version = "0.0.4"
+description = "Convert Ched SUS to YMST(world dai star) txt chart format."
+category = "main"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "sus2ymst-0.0.4-py3-none-any.whl", hash = "sha256:0bd2360c75222b353913ab2491e4d3aca619a3b84e2b2c20a097ec96b3041862"},
+]
+
+[package.dependencies]
+sus-io = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.7.1"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -567,4 +581,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "70d47992e76efa70b27cd81dbfef849a4c050f7ab90859625f57f285e48520fe"
+content-hash = "300016f6b1caf2576d854464eb5b6ef37bdc0e48a8e8d706c6ffde883a68058c"
