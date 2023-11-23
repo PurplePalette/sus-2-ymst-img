@@ -1,6 +1,6 @@
 # sus-2-ymst-img
 Convert SUS to YMST(world dai star) chart image.
-![sus2ymst](https://github.com/PurplePalette/sus-2-ymst-img/assets/16555696/2100c4fa-576e-490e-ab56-d32f7f81bd9a)
+![sus2ymst](https://github.com/PurplePalette/sus-2-ymst-img/assets/16555696/9183eac2-4046-4a5a-ad08-cf85a75e5911)
 
 
 ## Chart specifications
