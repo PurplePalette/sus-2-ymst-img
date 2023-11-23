@@ -37,8 +37,18 @@ async def convert(
     chart: str = Form(),
     textFlag: bool = Form(),
     laneFlag: bool = Form(),
+    sampleFlag: bool = Form(),
 ):
-    # テキストファイルの場合は、変換しない
+    # サンプルの場合は、サンプルを返す
+    if sampleFlag:
+        with open("sample.sus", "r", encoding="utf-8") as f:
+            chart = f.read()
+        notation_txt, error_messages = sus2ymst.loads(chart)
+        svg_text = notation_text_to_svg(notation_txt)
+        return templates.TemplateResponse(
+            "convert.html",
+            {"request": request, "svg_text": svg_text},
+        )
     if textFlag:
         svg_text = notation_text_to_svg(chart)
         return templates.TemplateResponse(

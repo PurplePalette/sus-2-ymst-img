@@ -41,10 +41,16 @@
                 <input accept=".sus,.txt" class="form-control form-control-md" id="formFile" type="file">
             </div>
             <div class="col-10 col-md-6 mx-4 my-4 box">
-                <div class="form-check form-check-inline">
+                <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="" id="laneFlag">
                     <label class="form-check-label" for="laneFlag">
-                        Chedの0~11(B)レーンを使用している場合は、チェックしてください。
+                        Chedの0~11(B)レーンを使用している
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="sampleFlag">
+                    <label class="form-check-label" for="sampleFlag">
+                        動作確認のためサンプルの譜面を使用する
                     </label>
                 </div>
             </div>
@@ -69,8 +75,10 @@
         const fileInput = document.getElementById('formFile');
         const file = fileInput.files[0];
 
+        const sampleFlag = document.getElementById('sampleFlag').checked;
+
         // Early return pattern is used to prevent further execution if there is no file.
-        if (!file) {
+        if (!file && !sampleFlag) {
             alert('SUSファイルを選択してください');
             return;
         }
@@ -80,9 +88,22 @@
 
         // Using FormData API for easier and more readable form data manipulation.
         const formData = new FormData();
-        formData.append('chart', await file.text());
-        formData.append('textFlag', file.name.endsWith('.txt') ? '1' : '0');
         formData.append('laneFlag', document.getElementById('laneFlag').checked ? '1' : '0');
+
+        if(sampleFlag){
+            console.log('sample');
+            formData.append('chart', ' ');
+            formData.append('sampleFlag', '1');
+            formData.append('textFlag', '0');
+        } else {
+            formData.append('sampleFlag', '0');
+            formData.append('chart', await file.text());
+            if(file && file.name.endsWith('.txt')){
+                formData.append('textFlag', '1');
+            } else {
+                formData.append('textFlag', '0');
+            }
+        }
 
         // Fetch API is used for making the POST request instead of form submission for better control and modern practices.
         try {
@@ -93,6 +114,7 @@
 
             // Handle response from the server if needed.
             if (response.ok) {
+                document.getElementById('generate_image').innerText = '';
                 console.log('File uploaded successfully.');
                 const htmlContent = await response.text();
                 const blob = new Blob([htmlContent], { type: 'text/html' });
